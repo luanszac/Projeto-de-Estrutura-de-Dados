@@ -90,7 +90,12 @@ public class LeitorCSV {
         if (colunas.size() != 15) {
             return false;
         }
-        for (String col : colunas) {
+        boolean isMovie = "MOVIE".equalsIgnoreCase(colunas.get(2));
+        for (int i = 0; i < colunas.size(); i++) {
+            if (i == 9 && isMovie) {
+                continue;
+            }
+            String col = colunas.get(i);
             if (col == null || col.isEmpty() || col.equalsIgnoreCase("null") || col.equalsIgnoreCase("nan")) {
                 return false;
             }
@@ -108,7 +113,11 @@ public class LeitorCSV {
         int runtime = Integer.parseInt(c.get(6));
         String genres = c.get(7);
         String productionCountries = c.get(8);
-        double seasons = Double.parseDouble(c.get(9));
+        String seasonsStr = c.get(9);
+        double seasons = (seasonsStr == null || seasonsStr.isEmpty() ||
+                seasonsStr.equalsIgnoreCase("null") || seasonsStr.equalsIgnoreCase("nan"))
+                ? 0.0
+                : Double.parseDouble(seasonsStr);
         String imdbId = c.get(10);
         double imdbScore = Double.parseDouble(c.get(11));
         double imdbVotes = Double.parseDouble(c.get(12));

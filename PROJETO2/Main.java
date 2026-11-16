@@ -3,6 +3,7 @@
  * Matrícula: 10445065 - Nome: Estephany Nicole da Silva
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -196,14 +197,17 @@ public class Main {
                 return;
             }
 
-            System.out.print("Informe o número único para o ID: ");
-            int numeroId = Integer.parseInt(scanner.nextLine().trim());
+            String prefixo = type.equals("SHOW") ? "ts" : "tm";
+            long numeroSugerido = arvore.proximoNumeroId(prefixo);
+            System.out.print("Número único para o ID [ENTER para usar " + numeroSugerido + " (" + prefixo + numeroSugerido + ")]: ");
+            String entradaNumero = scanner.nextLine().trim();
+            long numeroId = entradaNumero.isEmpty() ? numeroSugerido : Long.parseLong(entradaNumero);
+
             if (numeroId <= 0) {
                 System.out.println("O número do ID deve ser positivo.");
                 return;
             }
 
-            String prefixo = type.equals("SHOW") ? "ts" : "tm";
             String id = prefixo + numeroId;
 
             if (arvore.buscar(id) != null) {
@@ -236,9 +240,6 @@ public class Main {
             if (type.equals("SHOW")) {
                 System.out.print("Número de temporadas: ");
                 seasons = Double.parseDouble(scanner.nextLine().trim());
-            } else {
-                System.out.print("Temporadas (informe 1.0 ou 0.0 para compatibilidade): ");
-                seasons = Double.parseDouble(scanner.nextLine().trim());
             }
 
             System.out.print("IMDB ID (ex: tt1234567): ");
@@ -258,7 +259,7 @@ public class Main {
 
             if (title.isEmpty() || description.isEmpty() || ageCertification.isEmpty() ||
                 genres.isEmpty() || productionCountries.isEmpty() || imdbId.isEmpty()) {
-                System.out.println("Todos os 15 atributos devem ser preenchidos. Inserção cancelada.");
+                System.out.println("Todos os atributos obrigatórios devem ser preenchidos. Inserção cancelada.");
                 return;
             }
 
@@ -313,12 +314,23 @@ public class Main {
         System.out.print("Informe o ID do programa a ser removido: ");
         String id = scanner.nextLine().trim();
 
-        boolean removido = arvore.remover(id);
-        if (removido) {
-            System.out.println("Programa com ID '" + id + "' removido com sucesso.");
-        } else {
+        ProgramaNetFlix programa = arvore.buscar(id);
+        if (programa == null) {
             System.out.println("Programa com ID '" + id + "' não encontrado na árvore.");
+            return;
         }
+
+        System.out.println("Programa encontrado: [" + programa.getId() + "] " + programa.getTitle() + " (" + programa.getReleaseYear() + ")");
+        System.out.print("Confirmar remoção? (s/n): ");
+        String confirmacao = scanner.nextLine().trim();
+
+        if (!confirmacao.equalsIgnoreCase("s") && !confirmacao.equalsIgnoreCase("sim")) {
+            System.out.println("Remoção cancelada.");
+            return;
+        }
+
+        arvore.remover(id);
+        System.out.println("Programa removido com sucesso. Total restante na árvore: " + arvore.contarNos());
     }
 
     private static void exibirAlturaArvore(ArvoreBST arvore) {
@@ -326,6 +338,7 @@ public class Main {
             System.out.println("A árvore BST está vazia (altura = -1).");
         } else {
             System.out.println("Altura atual da árvore BST: " + arvore.altura());
+            System.out.println("Altura mínima teórica (árvore balanceada): " + arvore.alturaMinimaTeorica());
             System.out.println("Total de nós na árvore BST: " + arvore.contarNos());
         }
     }
@@ -336,8 +349,22 @@ public class Main {
             return;
         }
 
-        System.out.print("Informe o nome do arquivo CSV para salvar os dados (ex: titles_atualizado.csv): ");
+        System.out.print("Informe o nome do arquivo CSV para salvar os dados (ex: titles.csv): ");
         String nomeArquivo = scanner.nextLine().trim();
+        if (nomeArquivo.isEmpty()) {
+            System.out.println("Nome de arquivo inválido.");
+            return;
+        }
+
+        File arquivo = new File(nomeArquivo);
+        if (arquivo.exists()) {
+            System.out.print("O arquivo '" + nomeArquivo + "' já existe e será sobrescrito. Continuar? (s/n): ");
+            String confirmacao = scanner.nextLine().trim();
+            if (!confirmacao.equalsIgnoreCase("s") && !confirmacao.equalsIgnoreCase("sim")) {
+                System.out.println("Gravação cancelada.");
+                return;
+            }
+        }
 
         try {
             arvore.salvarEmArquivo(nomeArquivo);

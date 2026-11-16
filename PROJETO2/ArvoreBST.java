@@ -141,6 +141,14 @@ public class ArvoreBST {
         return Math.max(altEsq, altDir) + 1;
     }
 
+    public int alturaMinimaTeorica() {
+        int n = contarNos();
+        if (n <= 0) {
+            return -1;
+        }
+        return (int) (Math.log(n) / Math.log(2));
+    }
+
     public int contarNos() {
         return contarNosRecursivo(this.raiz);
     }
@@ -152,10 +160,28 @@ public class ArvoreBST {
         return 1 + contarNosRecursivo(no.getEsquerda()) + contarNosRecursivo(no.getDireita());
     }
 
-    public boolean existeNumeroId(int numero) {
-        String idTs = "ts" + numero;
-        String idTm = "tm" + numero;
-        return buscar(idTs) != null || buscar(idTm) != null;
+    public long proximoNumeroId(String prefixo) {
+        return encontrarMaiorNumeroId(this.raiz, prefixo.toLowerCase()) + 1;
+    }
+
+    private long encontrarMaiorNumeroId(NoBST no, String prefixo) {
+        if (no == null) {
+            return 0;
+        }
+        long maior = 0;
+        String idAtual = no.getId().toLowerCase();
+        if (idAtual.startsWith(prefixo)) {
+            try {
+                long num = Long.parseLong(idAtual.substring(prefixo.length()));
+                if (num > maior) {
+                    maior = num;
+                }
+            } catch (NumberFormatException e) {
+            }
+        }
+        long maiorEsq = encontrarMaiorNumeroId(no.getEsquerda(), prefixo);
+        long maiorDir = encontrarMaiorNumeroId(no.getDireita(), prefixo);
+        return Math.max(maior, Math.max(maiorEsq, maiorDir));
     }
 
     public List<ProgramaNetFlix> analise1Top10Tv14CrimeEmOrdem() {
@@ -271,9 +297,12 @@ public class ArvoreBST {
     private void salvarPreOrdem(NoBST no, BufferedWriter writer) throws IOException {
         if (no != null) {
             ProgramaNetFlix p = no.getDado();
+            String seasonsStr = "MOVIE".equalsIgnoreCase(p.getType()) && p.getSeasons() == 0.0
+                    ? ""
+                    : String.format(Locale.US, "%.1f", p.getSeasons());
             String linha = String.format(
                 Locale.US,
-                "%s,%s,%s,%s,%d,%s,%d,%s,%s,%.1f,%s,%.1f,%.1f,%.3f,%.1f",
+                "%s,%s,%s,%s,%d,%s,%d,%s,%s,%s,%s,%.1f,%.1f,%.3f,%.1f",
                 escaparCsv(p.getId()),
                 escaparCsv(p.getTitle()),
                 escaparCsv(p.getType()),
@@ -283,7 +312,7 @@ public class ArvoreBST {
                 p.getRuntime(),
                 escaparCsv(p.getGenres()),
                 escaparCsv(p.getProductionCountries()),
-                p.getSeasons(),
+                seasonsStr,
                 escaparCsv(p.getImdbId()),
                 p.getImdbScore(),
                 p.getImdbVotes(),
